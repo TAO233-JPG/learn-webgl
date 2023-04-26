@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        width: 100%;
+        height: 100vh;
+        background-color: #000;
+      }
+      #canvas {
+        width: 400px;
+        height: 400px;
+        margin: 0 auto;
+        display: block;
+        border: 1px solid #333;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="400px" height="400px"></canvas>
+    <script>
+      const vertexShader = `
+        // 设置精度 
+        precision mediump float;
+        attribute vec2 a_position;
+        attribute vec2 a_screen_size;
+        void main() {
+          // 转为裁剪坐标
+          vec2 position = (a_position / a_screen_size) * 2.0 - 1.0;
+          position =position*vec2(1.0, -1.0);
+          // 声明顶点位置
+          gl_Position = vec4(position, 0, 1.0);
+          // 大小
+          gl_PointSize = 12.0;
+        }
+      `;
+      const fragmentShader = `
+      precision mediump float;
+      uniform vec4 u_color;
+        void main() {
+          vec4 color = u_color / vec4(255.0, 255.0,255.0,1.0);
+          gl_FragColor = color;
+        }
+      `;
+    </script>
+    <script type="module">
+      import {
+        getWebGLContext,
+        initShaders,
+        initProgram,
+        getColor,
+      } from "./src/utils.js";
+
+      const canvas = document.querySelector("#canvas");
+
+      // 获取 WebGL 上下文
+      const gl = getWebGLContext("#canvas");
+      // 初始化着色器
+      const shaders = initShaders(gl, vertexShader, fragmentShader);
+      // 创建着色器程序
+      const program = initProgram(gl, shaders);
+      // 使用着色器
+      gl.useProgram(program);
+
+      // 传递变量
+      // 找到顶点着色器中的变量位置
+      
+      const aPositon = gl.getAttribLocation(program, "a_position");
+      const aScreenSize = gl.getAttribLocation(program, "a_screen_size");
+      const uColor = gl.getUniformLocation(program, "u_color");
+      // 传递数据
+      gl.vertexAttrib2f(aScreenSize, canvas.width, canvas.height);
+
+      const points = [];
+
+      canvas.addEventListener("click", (e) => {
+        const x = e.offsetX;
+        const y = e.offsetY;
+        const color = getColor();
+        points.push({ x, y, color });
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        for (let item of points) {
+          const { x, y, color } = item;
+          gl.uniform4f(uColor, ...color);
+          gl.vertexAttrib2f(aPositon, x, y);
+          gl.drawArrays(gl.POINTS, 0, 1)
+        }
+      });
+
+      // 设置清除的颜色
+      gl.clearColor(0.0, 0.0, 0.0, 0.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      gl.drawArrays(gl.POINTS, 0, 1);
+    </script>
+  </body>
+</html>
