@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <style>
+    body {
+      width: 100%;
+      height: 100vh;
+      background-color: #000;
+    }
+    #canvas {
+      width: 400px;
+      height: 400px;
+      margin: 0 auto;
+      display: block;
+      border: 1px solid #333;
+    }
+  </style>
+  <body>
+    <canvas id="canvas" width="400px" height="400px"></canvas>
+
+    <script>
+      const vertexShader = `
+        precision mediump float;
+            attribute vec2 a_position;
+            attribute vec2 a_screen_size;
+            attribute vec2 a_uv;
+            varying vec2 v_uv;
+            void main() {
+              // 转为裁剪坐标
+              vec2 position = (a_position / a_screen_size) * 2.0 - 1.0;
+              position =position*vec2(1.0, -1.0);
+              // 声明顶点位置
+              gl_Position = vec4(position, 0, 1.0);
+              // 大小
+              gl_PointSize = 12.0;
+              v_uv = a_uv;
+            }
+        `;
+      const fragmentShader = `
+        precision mediump float;
+        varying vec2 v_uv;
+        uniform sampler2D u_texture;
+          void main() {
+            gl_FragColor = texture2D(u_texture, vec2(v_uv.x, v_uv.y));
+            // gl_FragColor = vec4(0,0,1,1);
+          }
+        `;
+    </script>
+    <script>
+      function getImage(url) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = function () {
+            resolve(img);
+          };
+          img.src = url;
+        });
+      }
+
+    </script>
+    <script type="module">
+      import {
+        getWebGLContext,
+        initShaders,
+        initProgram,
+      } from "./src/utils.js";
+
+      const canvas = document.querySelector("#canvas");
+
+      // 获取 WebGL 上下文
+      const gl = getWebGLContext("#canvas");
+      // 初始化着色器
+      const shaders = initShaders(gl, vertexShader, fragmentShader);
+      // 创建着色器程序
+      const program = initProgram(gl, shaders);
+      // 使用着色器
+      gl.useProgram(program);
+      const aScreenSize = gl.getAttribLocation(program, "a_screen_size");
+      gl.vertexAttrib2f(aScreenSize, canvas.width, canvas.height);
+
+      const aPosition = gl.getAttribLocation(program, "a_position");
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 16, 0);
+      gl.enableVertexAttribArray(aPosition);
+
+      const positions = [
+        100,
+        100,
+        0,
+        0, //V0
+        100,
+        300,
+        0,
+        1, //V1
+        300,
+        300,
+        1,
+        1, //V2
+        100,
+        100,
+        0,
+        0, //V0
+        300,
+        300,
+        1,
+        1, //V2
+        300,
+        100,
+        1,
+        0, //V3
+      ];
+
+      const aUv = gl.getAttribLocation(program, "a_uv");
+      gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 16, 8);
+      gl.enableVertexAttribArray(aUv);
+
+      const uTexture = gl.getUniformLocation(program, "u_texture");
+
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(positions),
+        gl.STATIC_DRAW
+      );
+      getImage("/textures/OIP.jpg").then((img) => {
+        // 激活纹理通道
+        gl.activeTexture(gl.TEXTURE0);
+        // 创建纹理对象
+        const texture = gl.createTexture();
+        // 绑定
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // 为片元着色器传递数据
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          img
+        );
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.uniform1i(uTexture, 0);
+
+        render(gl);
+      });
+      function render(gl) {
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, positions.length / 4);
+      }
+    </script>
+  </body>
+</html>
