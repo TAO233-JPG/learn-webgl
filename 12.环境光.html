@@ -35,10 +35,12 @@
         step="0.01"
         value="0.2"
       />
+      <span id="ambientFactorVal">0.2</span>
     </div>
     <div>
       光线颜色：
       <input id="lightColor" class="color" type="color" value="#FFFFFF" />
+      <span id="lightColorVal">r: 255, g: 255, b:255</span>
     </div>
 
     <canvas id="canvas" width="400px" height="400px"></canvas>
@@ -179,17 +181,21 @@
 
       const lightColorEl = document.querySelector("#lightColor");
       const ambientFactorEl = document.querySelector("#ambientFactor");
+      const ambientFactorValEl = document.querySelector("#ambientFactorVal");
+      const lightColorValEl = document.querySelector("#lightColorVal");
 
       ambientFactorEl.addEventListener("change", (e) => {
         gl.uniform1f(uAmbientFactor, e.target.value);
+        ambientFactorValEl.textContent = e.target.value;
       });
       lightColorEl.addEventListener("input", (e) => {
         console.log("input...");
         const color = e.target.value;
-        const r = parseInt(color.substr(1, 2), 16) / 255;
-        const g = parseInt(color.substr(3, 2), 16) / 255;
-        const b = parseInt(color.substr(5, 2), 16) / 255;
-        gl.uniform3f(uLightColor, r, g, b);
+        const r = parseInt(color.substr(1, 2), 16);
+        const g = parseInt(color.substr(3, 2), 16);
+        const b = parseInt(color.substr(5, 2), 16);
+        gl.uniform3f(uLightColor, r / 255, g / 255, b / 255);
+        lightColorValEl.textContent = `r:${r}, g:${g}, b:${b} `;
       });
     </script>
   </body>
