@@ -1,3 +1,5 @@
+import { getColor } from "./utils.js";
+
 const CUBE_FACE_INDICES = [
   [0, 1, 2, 3], //前面
   [4, 5, 6, 7], //后面
@@ -28,14 +30,11 @@ export function createCube(width, height, depth) {
     [x, y, z],
     [x, -y, z],
   ];
-  const colorInput = [
-    [255, 0, 0, 1],
-    [0, 255, 0, 1],
-    [0, 0, 255, 1],
-    [255, 255, 0, 1],
-    [0, 255, 255, 1],
-    [255, 0, 255, 1],
-  ];
+  const colorInput = [];
+
+  for (let i = 0; i < 6; i++) {
+    colorInput.push(getColor());
+  }
 
   const colors = [];
   const positions = [];

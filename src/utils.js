@@ -63,9 +63,9 @@ export function initProgram(gl, { vertexShader, fragmentShader }) {
  * @returns {number[]}
  */
 export function getColor() {
-  const r = Math.floor(Math.random() * 256);
-  const g = Math.floor(Math.random() * 256);
-  const b = Math.floor(Math.random() * 256);
+  const r = Math.floor(Math.random() * 256) / 255;
+  const g = Math.floor(Math.random() * 256) / 255;
+  const b = Math.floor(Math.random() * 256) / 255;
 
   return [r, g, b, 1.0];
 }
